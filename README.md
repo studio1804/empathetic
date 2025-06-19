@@ -1,4 +1,4 @@
-# Empathetic - AI Testing Framework
+# Empathetic - Human-Centered AI Evaluation Framework
 
 Empathetic is an open-source testing framework that evaluates AI models for bias, fairness, and alignment with human
 values. Built with affected communities, it provides comprehensive test suites, simple CLI tools, and actionable
