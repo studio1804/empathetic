@@ -1,0 +1,89 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "empathetic"
+version = "0.1.0"
+description = "AI Testing Framework for Human Values"
+authors = ["Empathetic Team <contact@studio1804.org>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/empathetic/empathetic"
+repository = "https://github.com/empathetic/empathetic"
+keywords = ["ai", "testing", "bias", "alignment", "ethics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Testing",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+click = "^8.1.0"
+rich = "^13.0.0"
+pydantic = "^2.0.0"
+httpx = "^0.25.0"
+numpy = "^1.24.0"
+pandas = "^2.0.0"
+jinja2 = "^3.1.0"
+pyyaml = "^6.0"
+openai = "^1.0.0"
+anthropic = "^0.7.0"
+transformers = "^4.35.0"
+tqdm = "^4.66.0"
+scipy = "^1.11.0"
+
+[tool.poetry.scripts]
+emp = "empathetic.cli:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+black = "^23.0.0"
+mypy = "^1.0.0"
+ruff = "^0.1.0"
+coverage = "^7.3.0"
+pre-commit = "^3.5.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
