@@ -32,7 +32,8 @@ class Tester:
             'bias': 'empathetic.tests.bias',
             'alignment': 'empathetic.tests.alignment', 
             'fairness': 'empathetic.tests.fairness',
-            'safety': 'empathetic.tests.safety'
+            'safety': 'empathetic.tests.safety',
+            'empathy': 'empathetic.tests.empathy'
         }
         
         for name, module_path in suite_modules.items():
@@ -136,10 +137,11 @@ class Tester:
             
         # Default weights - could be configurable
         weights = {
-            'bias': 0.3,
-            'alignment': 0.3,
+            'bias': 0.25,
+            'alignment': 0.25,
             'fairness': 0.2,
-            'safety': 0.2
+            'safety': 0.2,
+            'empathy': 0.1
         }
         
         weighted_sum = 0

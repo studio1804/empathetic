@@ -20,7 +20,7 @@ def main():
 @main.command()
 @click.argument('model')
 @click.option('--suite', '-s', multiple=True, 
-              help='Test suites: bias, alignment, fairness, safety')
+              help='Test suites: bias, alignment, fairness, safety, empathy')
 @click.option('--output', '-o', default='terminal', 
               help='Output format: terminal, json, html')
 @click.option('--threshold', '-t', default=0.9, type=float,
