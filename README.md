@@ -15,7 +15,7 @@ Test AI models for bias, alignment, and human values.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/empathetic.git
+git clone https://github.com/studio1804/empathetic.git
 cd empathetic
 
 # Install with Poetry
@@ -112,10 +112,6 @@ print(f"Overall score: {results.overall_score}")
 2. Create a feature branch
 3. Add tests for new functionality
 4. Submit a pull request
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
 
 ## Development
 

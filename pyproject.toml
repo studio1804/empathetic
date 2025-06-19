@@ -9,8 +9,8 @@ description = "AI Testing Framework for Human Values"
 authors = ["Empathetic Team <contact@studio1804.org>"]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/empathetic/empathetic"
-repository = "https://github.com/empathetic/empathetic"
+homepage = "https://github.com/studio1804/empathetic"
+repository = "https://github.com/studio1804/empathetic"
 keywords = ["ai", "testing", "bias", "alignment", "ethics"]
 classifiers = [
     "Development Status :: 3 - Alpha",
