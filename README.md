@@ -1,28 +1,64 @@
 # Empathetic - AI Testing Framework
 
-Test AI models for bias, alignment, and human values.
+Empathetic is an open-source testing framework that evaluates AI models for bias, fairness, and alignment with human
+values. Built with affected communities, it provides comprehensive test suites, simple CLI tools, and actionable
+insights to ensure AI systems demonstrate genuine understanding and respect for all people.
 
 ## Features
 
 - **Bias Detection**: Test for gender, racial, age, and cultural biases
-- **Alignment Testing**: Evaluate alignment with human values (coming soon)
-- **Fairness Metrics**: Assess fairness across different groups (coming soon)
-- **Safety Testing**: Check for harmful content generation (coming soon)
+- **Alignment Testing**: Evaluate alignment with human values and ethics
+- **Fairness Assessment**: Test fairness across different groups and demographics
+- **Safety Testing**: Detect harmful content and safety violations
 - **Multiple Providers**: Support for OpenAI, Anthropic, and HuggingFace models
 - **Rich Reporting**: Generate detailed reports in HTML, JSON, or Markdown
+- **Interactive Setup**: Easy configuration with `emp setup`
+- **Comprehensive Logging**: Detailed logging for monitoring and debugging
+- **Extensive Testing**: 100+ unit tests for reliability
 
 ## Installation
+
+### Option 1: Using Poetry (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/studio1804/empathetic.git
 cd empathetic
 
-# Install with Poetry
-pip install poetry
+# Install Poetry if you don't have it
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Install dependencies
 poetry install
 
-# Or install with pip
+# Activate the environment
+poetry shell
+```
+
+### Option 2: Using pip + virtual environment
+
+```bash
+# Clone the repository
+git clone https://github.com/studio1804/empathetic.git
+cd empathetic
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in development mode
+pip install -e .
+```
+
+### Option 3: Using pyenv (Advanced)
+
+```bash
+# Install specific Python version and create environment
+pyenv install 3.11.10
+pyenv virtualenv 3.11.10 empathetic
+pyenv local empathetic
+
+# Install dependencies
 pip install -e .
 ```
 
@@ -42,13 +78,19 @@ emp env-check
 emp test gpt-4
 
 # Test specific suites
-emp test gpt-4 --suite bias
+emp test gpt-4 --suite bias,safety
+
+# Test all suites
+emp test gpt-4 --suite all
 
 # Generate HTML report
 emp test gpt-4 --output html
 
-# Quick check
+# Quick check with subset of tests
 emp check gpt-4 --suite bias --quick
+
+# Set custom threshold
+emp test claude-3-opus --threshold 0.95 --verbose
 ```
 
 ## Configuration
@@ -70,40 +112,97 @@ scoring:
 
 ## Test Suites
 
-### Bias Testing (Available)
-- Gender bias in occupations
-- Racial assumptions
-- Age stereotypes
-- Cultural biases
+### Bias Testing ✅
 
-### Alignment Testing
-- Human values alignment
-- Ethical decision making
-- (Coming soon)
+- Gender bias in occupations and roles
+- Racial and ethnic assumptions
+- Age-related stereotypes
+- Cultural and religious biases
+- Comprehensive pattern detection
 
-### Fairness Testing
-- Group fairness metrics
-- Individual fairness
-- (Coming soon)
+### Alignment Testing ✅
 
-### Safety Testing
-- Harmful content detection
-- Toxicity assessment
-- (Coming soon)
+- Honesty and transparency
+- Helpfulness vs. boundaries
+- Respect for human autonomy
+- Justice and fairness principles
+- Human dignity and equality
+- Privacy and consent
+
+### Fairness Testing ✅
+
+- Employment and hiring fairness
+- Financial decision fairness
+- Healthcare equity
+- Educational assessment fairness
+- Housing and services equity
+- Criminal justice fairness
+- Algorithmic fairness principles
+
+### Safety Testing ✅
+
+- Violence and harm prevention
+- Self-harm intervention
+- Illegal activity detection
+- Dangerous content blocking
+- Medical misinformation prevention
+- Fraud and scam protection
+- Child safety and protection
+- Hate speech detection
+
+## CLI Commands
+
+```bash
+# Setup and configuration
+emp setup                    # Interactive setup wizard
+emp env-check               # Check environment configuration
+
+# Testing commands  
+emp test MODEL              # Run all tests on a model
+emp test MODEL --suite SUITE1,SUITE2  # Run specific test suites
+emp test MODEL --quick      # Run subset of tests for faster feedback
+emp test MODEL --threshold 0.95       # Set custom passing threshold
+emp test MODEL --output html          # Generate HTML report
+emp test MODEL --verbose    # Verbose output with detailed information
+
+# Quick checks
+emp check MODEL --suite SUITE  # Quick check against specific suite
+emp check MODEL --suite bias --quick  # Quick bias check
+
+# Reports
+emp report --format html    # Generate HTML report from results
+emp report --input results.json --format markdown  # Convert results
+
+# Validation
+emp validate PATH           # Validate models at path (coming soon)
+```
 
 ## API Usage
 
 ```python
+import asyncio
 from empathetic.core.tester import Tester
-from empathetic.providers.openai import OpenAIProvider
 
-# Create tester
-tester = Tester()
 
-# Run tests
-results = await tester.run_tests("gpt-4", suites=["bias"])
+async def test_model():
+    # Create tester
+    tester = Tester()
 
-print(f"Overall score: {results.overall_score}")
+    # Run comprehensive tests
+    results = await tester.run_tests(
+        model="gpt-4",
+        suites=["bias", "alignment", "fairness", "safety"]
+    )
+
+    print(f"Overall score: {results.overall_score:.3f}")
+
+    # Check individual suite results
+    for suite_name, result in results.suite_results.items():
+        print(f"{suite_name}: {result.score:.3f} ({result.tests_passed}/{result.tests_total})")
+
+
+# Run the test
+asyncio.run(test_model())
 ```
 
 ## Contributing
