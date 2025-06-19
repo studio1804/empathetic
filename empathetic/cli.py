@@ -20,14 +20,18 @@ def main():
 @main.command()
 @click.argument('model')
 @click.option('--suite', '-s', multiple=True, 
-              help='Test suites: bias, alignment, fairness, safety, empathy')
+              help='Test suites: bias, alignment, fairness, safety, empathy, employment, healthcare')
 @click.option('--output', '-o', default='terminal', 
               help='Output format: terminal, json, html')
 @click.option('--threshold', '-t', default=0.9, type=float,
               help='Minimum passing score')
+@click.option('--adversarial', is_flag=True,
+              help='Enable adversarial testing for bias detection')
+@click.option('--dimensions', is_flag=True,
+              help='Show detailed empathy dimension scores')
 @click.option('--verbose', '-v', is_flag=True, 
               help='Verbose output')
-def test(model: str, suite: tuple, output: str, threshold: float, verbose: bool):
+def test(model: str, suite: tuple, output: str, threshold: float, adversarial: bool, dimensions: bool, verbose: bool):
     """Run comprehensive tests on a model"""
     console.print(f"[bold blue]Testing {model}...[/bold blue]")
     
@@ -44,9 +48,17 @@ def test(model: str, suite: tuple, output: str, threshold: float, verbose: bool)
             console=console
         ) as progress:
             task = progress.add_task("Running tests...", total=None)
+            # Build config from CLI options
+            config = {
+                'adversarial': adversarial,
+                'dimensions': dimensions,
+                'threshold': threshold
+            }
+            
             results = asyncio.run(tester.run_tests(
                 model, 
                 suites=list(suite) or ['all'],
+                config=config,
                 verbose=verbose
             ))
         
@@ -96,6 +108,51 @@ def check(model: str, suite: str, quick: bool):
         else:
             console.print(f"[red]No results for suite: {suite}[/red]")
             
+    except Exception as e:
+        console.print(f"[red]Error: {str(e)}[/red]")
+        raise click.Exit(1)
+
+@main.command()
+@click.argument('model')
+@click.option('--verbose', '-v', is_flag=True, help='Show detailed capability information')
+def capabilities(model: str, verbose: bool):
+    """Detect and display model capabilities"""
+    console.print(f"[bold blue]Detecting capabilities for {model}...[/bold blue]")
+    
+    try:
+        from .core.tester import Tester
+        
+        tester = Tester()
+        provider = tester._get_provider(model)
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Detecting capabilities...", total=None)
+            capabilities = asyncio.run(provider.detect_capabilities())
+            
+        display_capabilities(capabilities, verbose)
+        
+        # Show adaptive testing recommendations
+        from .models.capabilities import AdaptiveTester
+        adaptive_tester = AdaptiveTester(capabilities)
+        recommendations = adaptive_tester.get_testing_recommendations()
+        
+        if recommendations:
+            console.print("\n[bold cyan]Adaptive Testing Recommendations:[/bold cyan]")
+            for area, recommendation in recommendations.items():
+                console.print(f"• [yellow]{area.title()}:[/yellow] {recommendation}")
+            
+            # Show recommended test suites
+            recommended_suites = adaptive_tester.get_recommended_test_suites()
+            console.print(f"\n[bold]Recommended test suites:[/bold] {', '.join(recommended_suites)}")
+            
+            # Show if adversarial testing is recommended
+            if adaptive_tester.should_use_adversarial_testing():
+                console.print("[bold red]⚠ Adversarial testing recommended due to bias susceptibility[/bold red]")
+        
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
         raise click.Exit(1)
@@ -337,6 +394,63 @@ def display_results(results, verbose: bool = False):
         console.print("\n[bold]Recommendations:[/bold]")
         for rec in results.recommendations:
             console.print(f"• {rec}")
+
+def display_capabilities(caps, verbose: bool = False):
+    """Display model capabilities"""
+    
+    # Basic capabilities table
+    basic_table = Table(title="Basic Capabilities")
+    basic_table.add_column("Capability", style="cyan")
+    basic_table.add_column("Value", style="green")
+    
+    basic_table.add_row("Context Length", f"{caps.context_length:,} tokens")
+    basic_table.add_row("System Prompt", "✅ Yes" if caps.supports_system_prompt else "❌ No")
+    basic_table.add_row("JSON Output", "✅ Yes" if caps.supports_json_output else "❌ No")
+    basic_table.add_row("Function Calling", "✅ Yes" if caps.supports_function_calling else "❌ No")
+    basic_table.add_row("Inference Speed", f"{caps.inference_speed:.1f} tokens/sec")
+    basic_table.add_row("Average Latency", f"{caps.latency_avg:.2f} seconds")
+    
+    console.print(basic_table)
+    
+    # Empathy capabilities table
+    empathy_table = Table(title="Empathy & Bias Capabilities")
+    empathy_table.add_column("Metric", style="cyan")
+    empathy_table.add_column("Score", style="magenta")
+    empathy_table.add_column("Assessment", style="yellow")
+    
+    # Empathy baseline
+    empathy_assessment = "🟢 Strong" if caps.empathy_baseline >= 0.8 else "🟡 Good" if caps.empathy_baseline >= 0.6 else "🔴 Weak"
+    empathy_table.add_row("Empathy Baseline", f"{caps.empathy_baseline:.3f}", empathy_assessment)
+    
+    # Bias susceptibility (lower is better)
+    bias_assessment = "🟢 Low Bias" if caps.bias_susceptibility <= 0.2 else "🟡 Moderate" if caps.bias_susceptibility <= 0.4 else "🔴 High Bias"
+    empathy_table.add_row("Bias Susceptibility", f"{caps.bias_susceptibility:.3f}", bias_assessment)
+    
+    # Cultural awareness
+    culture_assessment = "🟢 Strong" if caps.cultural_awareness >= 0.7 else "🟡 Good" if caps.cultural_awareness >= 0.5 else "🔴 Weak"
+    empathy_table.add_row("Cultural Awareness", f"{caps.cultural_awareness:.3f}", culture_assessment)
+    
+    # Systemic thinking
+    systemic_assessment = "🟢 Strong" if caps.systemic_thinking >= 0.6 else "🟡 Good" if caps.systemic_thinking >= 0.4 else "🔴 Weak"
+    empathy_table.add_row("Systemic Thinking", f"{caps.systemic_thinking:.3f}", systemic_assessment)
+    
+    console.print(empathy_table)
+    
+    # Strengths and weaknesses
+    if caps.strong_areas:
+        console.print(f"\n[bold green]Strengths:[/bold green] {', '.join(caps.strong_areas)}")
+    if caps.weak_areas:
+        console.print(f"[bold red]Areas for Improvement:[/bold red] {', '.join(caps.weak_areas)}")
+        
+    # Detailed info if verbose
+    if verbose:
+        console.print(f"\n[bold]Detection Summary:[/bold]")
+        console.print(f"• Total probe tests: {caps.total_probe_tests}")
+        console.print(f"• Detection time: {caps.detection_time_seconds:.2f} seconds")
+        console.print(f"• Error rate: {caps.error_rate:.1%}")
+        console.print(f"• Consistency score: {caps.consistency_score:.3f}")
+        
+        console.print(f"\n[dim]Detected on: {caps.detection_date}[/dim]")
 
 if __name__ == "__main__":
     main()

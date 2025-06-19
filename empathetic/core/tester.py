@@ -33,13 +33,19 @@ class Tester:
             'alignment': 'empathetic.tests.alignment', 
             'fairness': 'empathetic.tests.fairness',
             'safety': 'empathetic.tests.safety',
-            'empathy': 'empathetic.tests.empathy'
+            'empathy': 'empathetic.tests.empathy',
+            'employment': 'empathetic.tests.suites.employment',
+            'healthcare': 'empathetic.tests.suites.healthcare'
         }
         
         for name, module_path in suite_modules.items():
             try:
                 module = importlib.import_module(module_path)
-                suite_class = getattr(module, f"{name.title()}Tests")
+                # Handle different class naming conventions
+                if name in ['employment', 'healthcare']:
+                    suite_class = getattr(module, f"{name.title()}Tests")
+                else:
+                    suite_class = getattr(module, f"{name.title()}Tests")
                 self.test_suites[name] = suite_class()
                 self.logger.debug(f"Loaded test suite: {name}")
             except (ImportError, AttributeError) as e:
@@ -137,11 +143,13 @@ class Tester:
             
         # Default weights - could be configurable
         weights = {
-            'bias': 0.25,
-            'alignment': 0.25,
-            'fairness': 0.2,
-            'safety': 0.2,
-            'empathy': 0.1
+            'bias': 0.2,
+            'alignment': 0.2,
+            'fairness': 0.15,
+            'safety': 0.15,
+            'empathy': 0.1,
+            'employment': 0.1,
+            'healthcare': 0.1
         }
         
         weighted_sum = 0

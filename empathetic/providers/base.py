@@ -9,6 +9,12 @@ class ModelResponse:
     metadata: Dict[str, Any]
     usage: Optional[Dict[str, int]] = None
     model: Optional[str] = None
+    latency: float = 0.0  # Response time in seconds
+    
+    @property
+    def text(self) -> str:
+        """Alias for content for backward compatibility"""
+        return self.content
 
 class ModelProvider(ABC):
     """Base class for model providers"""
@@ -38,6 +44,13 @@ class ModelProvider(ABC):
     def validate_config(self) -> bool:
         """Validate provider configuration"""
         pass
+        
+    async def detect_capabilities(self):
+        """Detect model capabilities - override in subclasses for provider-specific detection"""
+        from ..models.capabilities import CapabilityDetector
+        
+        detector = CapabilityDetector()
+        return await detector.detect_capabilities(self, quick_mode=True)
         
     def get_model_info(self) -> Dict[str, Any]:
         """Get information about the model"""

@@ -1,4 +1,5 @@
 import os
+import time
 from typing import List, Dict, Any, Optional
 import httpx
 import json
@@ -30,6 +31,8 @@ class OpenAIProvider(ModelProvider):
         
     async def generate(self, prompt: str, **kwargs) -> ModelResponse:
         """Generate response using OpenAI API"""
+        start_time = time.time()
+        
         self.logger.debug(f"Generating response with OpenAI", extra={
             "model": self.model_name,
             "prompt_length": len(prompt),
@@ -37,9 +40,15 @@ class OpenAIProvider(ModelProvider):
         })
         
         try:
+            # Handle system prompt if provided
+            messages = []
+            if kwargs.get("system_prompt"):
+                messages.append({"role": "system", "content": kwargs["system_prompt"]})
+            messages.append({"role": "user", "content": prompt})
+            
             payload = {
                 "model": self.model_name,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": messages,
                 "temperature": kwargs.get("temperature", 0.7),
                 "max_tokens": kwargs.get("max_tokens", 1000),
                 **{k: v for k, v in kwargs.items() 
@@ -64,6 +73,8 @@ class OpenAIProvider(ModelProvider):
                 "usage": data.get("usage", {})
             })
             
+            latency = time.time() - start_time
+            
             return ModelResponse(
                 content=response_content,
                 metadata={
@@ -72,7 +83,8 @@ class OpenAIProvider(ModelProvider):
                     "id": data["id"]
                 },
                 usage=data.get("usage"),
-                model=data["model"]
+                model=data["model"],
+                latency=latency
             )
             
         except httpx.RequestError as e:
@@ -112,6 +124,75 @@ class OpenAIProvider(ModelProvider):
     def validate_config(self) -> bool:
         """Validate OpenAI configuration"""
         return bool(self.api_key and self.model_name)
+        
+    async def detect_capabilities(self):
+        """Detect OpenAI-specific model capabilities"""
+        from ..models.capabilities import CapabilityDetector
+        
+        # Use base detection but add OpenAI-specific info
+        detector = CapabilityDetector()
+        capabilities = await detector.detect_capabilities(self, quick_mode=True)
+        
+        # Add OpenAI-specific capability overrides
+        openai_capabilities = self._get_openai_model_capabilities()
+        
+        # Update capabilities with known OpenAI model specs
+        if openai_capabilities:
+            capabilities.context_length = openai_capabilities.get('context_length', capabilities.context_length)
+            capabilities.supports_system_prompt = openai_capabilities.get('supports_system_prompt', True)
+            capabilities.supports_json_output = openai_capabilities.get('supports_json_output', True)
+            capabilities.supports_function_calling = openai_capabilities.get('supports_function_calling', False)
+            
+        self.logger.info(f"OpenAI model capabilities detected", extra={
+            "model": self.model_name,
+            "context_length": capabilities.context_length,
+            "empathy_baseline": capabilities.empathy_baseline,
+            "bias_susceptibility": capabilities.bias_susceptibility
+        })
+        
+        return capabilities
+        
+    def _get_openai_model_capabilities(self) -> Optional[Dict[str, Any]]:
+        """Get known capabilities for specific OpenAI models"""
+        model_specs = {
+            "gpt-4": {
+                "context_length": 8192,
+                "supports_system_prompt": True,
+                "supports_json_output": True,
+                "supports_function_calling": True,
+                "expected_empathy_baseline": 0.75
+            },
+            "gpt-4-turbo": {
+                "context_length": 128000,
+                "supports_system_prompt": True,
+                "supports_json_output": True,
+                "supports_function_calling": True,
+                "expected_empathy_baseline": 0.78
+            },
+            "gpt-4-turbo-preview": {
+                "context_length": 128000,
+                "supports_system_prompt": True,
+                "supports_json_output": True,
+                "supports_function_calling": True,
+                "expected_empathy_baseline": 0.78
+            },
+            "gpt-3.5-turbo": {
+                "context_length": 16385,
+                "supports_system_prompt": True,
+                "supports_json_output": True,
+                "supports_function_calling": True,
+                "expected_empathy_baseline": 0.65
+            },
+            "gpt-3.5-turbo-16k": {
+                "context_length": 16385,
+                "supports_system_prompt": True,
+                "supports_json_output": True,
+                "supports_function_calling": True,
+                "expected_empathy_baseline": 0.65
+            }
+        }
+        
+        return model_specs.get(self.model_name)
         
     async def __aenter__(self):
         return self

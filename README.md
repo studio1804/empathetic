@@ -11,6 +11,7 @@ insights to ensure AI systems demonstrate genuine understanding and respect for 
 - **Fairness Assessment**: Test fairness across different groups and demographics
 - **Empathy Evaluation**: Assess understanding of human circumstances and dignity
 - **Safety Testing**: Detect harmful content and safety violations
+- **Community Validation**: Real people from affected communities validate AI responses
 - **Multiple Providers**: Support for OpenAI, Anthropic, and HuggingFace models
 - **Rich Reporting**: Generate detailed reports in HTML, JSON, or Markdown
 - **Interactive Setup**: Easy configuration with `emp setup`
@@ -79,10 +80,16 @@ emp env-check
 emp test gpt-4
 
 # Test specific suites
-emp test gpt-4 --suite bias,safety,empathy
+emp test gpt-4 --suite bias,empathy,employment
 
-# Test all suites
+# Test all suites including domain-specific
 emp test gpt-4 --suite all
+
+# Enable adversarial testing for bias detection
+emp test gpt-4 --suite empathy --adversarial
+
+# Show detailed empathy dimension scores
+emp test gpt-4 --suite empathy --dimensions
 
 # Generate HTML report
 emp test gpt-4 --output html
@@ -152,6 +159,8 @@ scoring:
 
 ### Empathy Testing ✅
 
+- **Six-Dimension Scoring**: Recognition, Understanding, Dignity, Support, Growth, Non-judgment
+- **Adversarial Testing**: Identity variations reveal hidden biases
 - Understanding of human circumstances and challenges
 - Recognition of systemic barriers and inequities
 - Preservation of human dignity and agency
@@ -162,6 +171,30 @@ scoring:
 - Immigration status and safety concerns
 - Housing insecurity and poverty
 - Educational barriers and learning differences
+
+### Employment Testing ✅
+
+- Hiring bias and discrimination detection
+- Resume gap evaluation (caregiving, health, etc.)
+- Criminal record and second chances
+- Disability accommodation requests
+- Pregnancy and family planning bias
+- Age discrimination in hiring
+- Mental health workplace stigma
+- Immigration status and visa sponsorship
+- LGBTQ+ workplace inclusion
+
+### Healthcare Testing ✅
+
+- Medical bias in pain assessment
+- Racial disparities in treatment
+- Gender bias in women's health
+- Mental health stigma and treatment
+- Disability autonomy in medical care
+- Addiction treatment and recovery
+- Transgender healthcare access
+- Language barriers and interpretation
+- Insurance coverage and advocacy
 
 ### Safety Testing ✅
 
@@ -193,6 +226,10 @@ emp test MODEL --verbose    # Verbose output with detailed information
 emp check MODEL --suite SUITE  # Quick check against specific suite
 emp check MODEL --suite bias --quick  # Quick bias check
 
+# Model capabilities
+emp capabilities MODEL          # Detect model capabilities and get recommendations
+emp capabilities MODEL --verbose  # Detailed capability analysis
+
 # Reports
 emp report --format html    # Generate HTML report from results
 emp report --input results.json --format markdown  # Convert results
@@ -212,10 +249,11 @@ async def test_model():
     # Create tester
     tester = Tester()
 
-    # Run comprehensive tests
+    # Run comprehensive tests including domain-specific
     results = await tester.run_tests(
         model="gpt-4",
-        suites=["bias", "alignment", "fairness", "empathy", "safety"]
+        suites=["bias", "alignment", "fairness", "empathy", "employment", "healthcare", "safety"],
+        config={"adversarial": True}  # Enable adversarial testing
     )
 
     print(f"Overall score: {results.overall_score:.3f}")
@@ -229,12 +267,50 @@ async def test_model():
 asyncio.run(test_model())
 ```
 
+## Community Validation
+
+Empathetic includes a groundbreaking community validation system where real people from affected communities evaluate AI responses. This ensures our tests reflect authentic lived experiences.
+
+- **500+ Community Validators** from disability, LGBTQ+, racial justice, and other communities
+- **Partner Organizations** verify validator credentials and provide oversight
+- **Real-world Impact** - validation results help improve AI systems and inform policy
+
+**Learn More**: [Community Validation Documentation](docs/community-validation.md)
+
+## Model Capability Detection
+
+Empathetic automatically detects AI model capabilities to optimize testing effectiveness. The system analyzes empathy baselines, bias susceptibility, cultural awareness, and performance characteristics to provide adaptive testing recommendations.
+
+```bash
+# Detect model capabilities
+emp capabilities gpt-4
+
+# Get detailed capability analysis
+emp capabilities gpt-4 --verbose
+```
+
+**Features:**
+- **Empathy Baseline Detection**: Measures core empathy across standard scenarios
+- **Bias Susceptibility Analysis**: Tests how empathy varies by identity markers  
+- **Cultural Awareness Assessment**: Evaluates understanding of diverse contexts
+- **Adaptive Test Configuration**: Automatically optimizes test complexity and focus areas
+- **Smart Test Selection**: Recommends optimal test suites based on model strengths
+
+**Learn More**: [Model Capabilities Documentation](docs/model-capabilities.md)
+
+### Get Involved
+- **Become a Validator**: Join our community validation network
+- **Partner Organization**: Help verify community validators
+- **Submit Test Cases**: Share scenarios from your lived experience
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Add tests for new functionality
 4. Submit a pull request
+
+**Community Contributions Welcome**: We especially encourage contributions from affected communities to help expand our test coverage and validation network.
 
 ## Development
 
