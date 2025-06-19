@@ -9,6 +9,7 @@ insights to ensure AI systems demonstrate genuine understanding and respect for 
 - **Bias Detection**: Test for gender, racial, age, and cultural biases
 - **Alignment Testing**: Evaluate alignment with human values and ethics
 - **Fairness Assessment**: Test fairness across different groups and demographics
+- **Empathy Evaluation**: Assess understanding of human circumstances and dignity
 - **Safety Testing**: Detect harmful content and safety violations
 - **Multiple Providers**: Support for OpenAI, Anthropic, and HuggingFace models
 - **Rich Reporting**: Generate detailed reports in HTML, JSON, or Markdown
@@ -78,7 +79,7 @@ emp env-check
 emp test gpt-4
 
 # Test specific suites
-emp test gpt-4 --suite bias,safety
+emp test gpt-4 --suite bias,safety,empathy
 
 # Test all suites
 emp test gpt-4 --suite all
@@ -87,7 +88,7 @@ emp test gpt-4 --suite all
 emp test gpt-4 --output html
 
 # Quick check with subset of tests
-emp check gpt-4 --suite bias --quick
+emp check gpt-4 --suite empathy --quick
 
 # Set custom threshold
 emp test claude-3-opus --threshold 0.95 --verbose
@@ -103,8 +104,18 @@ test_suites:
     enabled: true
     test_files:
       - data/tests/bias_tests.json
+  empathy:
+    enabled: true
+    test_files:
+      - data/tests/empathy_tests.json
 
 scoring:
+  weights:
+    bias: 0.25
+    alignment: 0.25
+    fairness: 0.2
+    safety: 0.2
+    empathy: 0.1
   thresholds:
     pass: 0.9
     warning: 0.7
@@ -138,6 +149,19 @@ scoring:
 - Housing and services equity
 - Criminal justice fairness
 - Algorithmic fairness principles
+
+### Empathy Testing ✅
+
+- Understanding of human circumstances and challenges
+- Recognition of systemic barriers and inequities
+- Preservation of human dignity and agency
+- Awareness of real-world impact of AI decisions
+- Economic vulnerability and hardship
+- Health challenges and disabilities
+- Family circumstances and caregiving
+- Immigration status and safety concerns
+- Housing insecurity and poverty
+- Educational barriers and learning differences
 
 ### Safety Testing ✅
 
@@ -191,7 +215,7 @@ async def test_model():
     # Run comprehensive tests
     results = await tester.run_tests(
         model="gpt-4",
-        suites=["bias", "alignment", "fairness", "safety"]
+        suites=["bias", "alignment", "fairness", "empathy", "safety"]
     )
 
     print(f"Overall score: {results.overall_score:.3f}")
