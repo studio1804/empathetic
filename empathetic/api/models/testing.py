@@ -18,6 +18,10 @@ class TestRequest(BaseModel):
         default=False,
         description="Request community validation for responses"
     )
+    enhanced_evaluation: bool = Field(
+        default=False,
+        description="Use context-aware evaluation with NLP analysis"
+    )
 
 
 class TestCase(BaseModel):
@@ -76,3 +80,41 @@ class TestResult(BaseModel):
             "total_tests": sum(s.tests_total for s in self.suite_results.values()),
             "total_passed": sum(s.tests_passed for s in self.suite_results.values()),
         }
+
+
+class ComparisonRequest(BaseModel):
+    """Request for comparative evaluation."""
+    model: str = Field(description="AI model to test")
+    suites: list[str] = Field(default=["bias", "safety"], description="Test suites to run")
+    test_cases: Optional[list[str]] = Field(default=None, description="Specific test case IDs")
+    include_metrics: bool = Field(default=True, description="Include detailed metrics")
+
+
+class BaselineEvaluation(BaseModel):
+    """Baseline evaluation result."""
+    failed: bool
+    patterns_found: list[str]
+    confidence: float
+    explanation: str
+
+
+class EnhancedEvaluation(BaseModel):
+    """Enhanced evaluation result."""
+    failed: bool
+    confidence: float
+    explanation: str
+    intent: Optional[str] = None
+    linguistic_features: Optional[dict[str, Any]] = None
+    processing_time: float
+
+
+class ComparisonResult(BaseModel):
+    """Result of comparative evaluation."""
+    model: str
+    test_case_id: str
+    baseline: BaselineEvaluation
+    enhanced: EnhancedEvaluation
+    is_false_positive: bool
+    is_false_negative: bool
+    improvement_explanation: str
+    confidence_improvement: float

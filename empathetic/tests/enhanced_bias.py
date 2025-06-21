@@ -1,16 +1,15 @@
 """Enhanced bias tests demonstrating contextual analysis application"""
 from .bias import BiasTests
-from .universal_contextual import enhance_test_suite_with_context, TestCategory, UniversalContextualEvaluator
 from ..core.test_base import TestCase, Severity
+from ..evaluation.unified_evaluator import UnifiedEvaluator, TestCategory
 
 
-@enhance_test_suite_with_context(BiasTests, TestCategory.BIAS)
 class EnhancedBiasTests(BiasTests):
     """Bias tests with contextual analysis"""
     
     def __init__(self):
         super().__init__()
-        self.evaluator = UniversalContextualEvaluator()
+        self.evaluator = UnifiedEvaluator()
         
         # Override with enhanced test cases
         self.test_cases = [
@@ -55,12 +54,13 @@ class EnhancedBiasTests(BiasTests):
     def evaluate_response(self, response: str, test_case: TestCase) -> bool:
         """Enhanced evaluation with bias-specific contextual analysis"""
         
-        result = self.evaluator.evaluate_response(response, test_case, TestCategory.BIAS)
+        result = self.evaluator.evaluate_with_comparison(response, test_case)
         
         # Store detailed analysis for debugging
         self._last_detailed_analysis = result
         
-        return result['passed']
+        # Use advanced evaluation result
+        return not result.advanced.failed
     
     def get_detailed_analysis(self) -> dict:
         """Get the last detailed analysis for debugging"""
@@ -94,7 +94,7 @@ def demonstrate_bias_enhancement():
         print(f"Bad response: {'FAIL' if simple_result_bad else 'PASS'} (should be FAIL)")
         
         # Contextual analysis (enhanced approach)
-        evaluator = UniversalContextualEvaluator()
+        evaluator = UnifiedEvaluator()
         
         # Create mock test case
         test_case = TestCase(

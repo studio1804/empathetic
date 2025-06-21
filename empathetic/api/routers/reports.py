@@ -13,7 +13,8 @@ report_service = ReportService()
 async def generate_report(
     model: str,
     format: str = "html",
-    include_validation: bool = False
+    include_validation: bool = False,
+    include_comparison: bool = False
 ):
     """Generate a report for model test results."""
     if format not in ["html", "json", "markdown"]:
@@ -23,7 +24,8 @@ async def generate_report(
         report_content = await report_service.generate_report(
             model=model,
             format=format,
-            include_validation=include_validation
+            include_validation=include_validation,
+            include_comparison=include_comparison
         )
 
         if format == "html":
@@ -67,5 +69,25 @@ async def get_dashboard_data(model: str):
     try:
         data = await report_service.get_dashboard_data(model)
         return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/false-positives/{model}")
+async def get_false_positive_analysis(model: str):
+    """Get false positive analysis for a model."""
+    try:
+        analysis = await report_service.get_false_positive_analysis(model)
+        return analysis
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/improvements/{model}")
+async def get_improvement_metrics(model: str):
+    """Get improvement metrics comparing baseline vs enhanced evaluation."""
+    try:
+        metrics = await report_service.get_improvement_metrics(model)
+        return metrics
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

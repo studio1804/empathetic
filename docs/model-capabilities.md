@@ -183,6 +183,26 @@ max_tokens = min(500, capabilities.context_length // 10)
 # Test complexity adjustment
 if capabilities.empathy_baseline < 0.6:
     test_complexity = 'basic'
+    
+# Enhanced evaluation for capable models
+if capabilities.empathy_baseline > 0.7:
+    enable_context_aware_evaluation = True
+```
+
+### Context-Aware Integration
+
+The capability detection system now integrates with the enhanced evaluation:
+
+```python
+# Adjust evaluation based on model sophistication
+if capabilities.systemic_thinking > 0.6:
+    # Use advanced NLP analysis for sophisticated models
+    evaluator = UnifiedEvaluator()
+    evaluator.enable_full_analysis = True
+else:
+    # Use baseline for simpler models
+    evaluator = UnifiedEvaluator()
+    evaluator.fast_mode = True
 ```
 
 ### Smart Test Selection

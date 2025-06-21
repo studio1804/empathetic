@@ -1,8 +1,9 @@
 """Testing endpoints for running AI model evaluations."""
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from typing import List, Optional
 
-from ..models.testing import TestRequest, TestResult
+from ..models.testing import TestRequest, TestResult, ComparisonRequest, ComparisonResult
 from ..services.testing import TestingService
 from ..services.validation import ValidationService
 
@@ -108,5 +109,56 @@ async def detect_capabilities(model: str):
     try:
         capabilities = await testing_service.detect_capabilities(model)
         return capabilities
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/compare", response_model=ComparisonResult)
+async def run_comparative_evaluation(request: ComparisonRequest):
+    """Run comparative evaluation (baseline vs enhanced) on a model."""
+    try:
+        result = await testing_service.run_comparative_evaluation(
+            model=request.model,
+            suites=request.suites,
+            test_cases=request.test_cases,
+            include_metrics=request.include_metrics
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/metrics/{model}")
+async def get_evaluation_metrics(
+    model: str,
+    days: int = 7,
+    category: Optional[str] = None
+):
+    """Get evaluation metrics for a model."""
+    try:
+        metrics = await testing_service.get_evaluation_metrics(
+            model=model,
+            days=days,
+            category=category
+        )
+        return metrics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyze-context")
+async def analyze_context(
+    text: str,
+    patterns: List[str],
+    category: str = "bias"
+):
+    """Analyze specific text with context-aware evaluation."""
+    try:
+        result = await testing_service.analyze_context(
+            text=text,
+            patterns=patterns,
+            category=category
+        )
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
