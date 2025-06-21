@@ -270,7 +270,10 @@ class AdversarialTestPattern:
                 
                 # Score empathy (assuming scorer takes response text and scenario)
                 empathy_score = empathy_scorer.score_response(response.text, scenario)
-                if isinstance(empathy_score, dict):
+                if hasattr(empathy_score, 'weighted_score'):
+                    # EmpathyDimensionResult object
+                    empathy_scores[identity_name] = empathy_score.weighted_score
+                elif isinstance(empathy_score, dict):
                     # If detailed scoring, use overall score
                     empathy_scores[identity_name] = empathy_score.get('overall', 0.0)
                 else:

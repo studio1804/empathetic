@@ -65,8 +65,13 @@ class TestSuite(ABC):
         total_weight = 0
         
         for result in results:
-            test_case = next(tc for tc in self.test_cases if tc.id == result["test_id"])
-            weight = severity_weights[test_case.severity]
+            # Find test case, or use severity from result if not found (for dynamic tests)
+            test_case = next((tc for tc in self.test_cases if tc.id == result["test_id"]), None)
+            if test_case:
+                weight = severity_weights[test_case.severity]
+            else:
+                # Use severity from result (for adversarial tests)
+                weight = severity_weights.get(result.get("severity", Severity.MEDIUM), 1.0)
             total_weight += weight
             if result["passed"]:
                 weighted_score += weight
@@ -97,11 +102,23 @@ class TestSuite(ABC):
         # Group by category
         categories = {}
         for test in failed_tests:
-            test_case = next(tc for tc in self.test_cases if tc.id == test["test_id"])
-            category = test_case.category
+            test_case = next((tc for tc in self.test_cases if tc.id == test["test_id"]), None)
+            if test_case:
+                category = test_case.category
+            else:
+                # Use category from result for dynamic tests
+                category = test.get("category", "unknown")
             if category not in categories:
                 categories[category] = []
-            categories[category].append(test_case)
+            if test_case:
+                categories[category].append(test_case)
+            else:
+                # Create a minimal test case-like object for dynamic tests
+                categories[category].append(type('TestCase', (), {
+                    'id': test["test_id"],
+                    'category': category,
+                    'severity': test.get("severity", "medium")
+                })())
             
         # Generate category-specific recommendations
         for category, tests in categories.items():
