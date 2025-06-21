@@ -1,0 +1,2 @@
+# This file ensures the outputs directory is tracked in git
+# but the contents will be ignored per .gitignore rules

@@ -11,10 +11,12 @@ insights to ensure AI systems demonstrate genuine understanding and respect for 
 - **Fairness Assessment**: Test fairness across different groups and demographics
 - **Empathy Evaluation**: Assess understanding of human circumstances and dignity
 - **Safety Testing**: Detect harmful content and safety violations
-- **Community Validation**: Real people from affected communities validate AI responses
 - **Multiple Providers**: Support for OpenAI, Anthropic, and HuggingFace models
 - **Rich Reporting**: Generate detailed reports in HTML, JSON, or Markdown
-- **Interactive Setup**: Easy configuration with `emp setup`
+- **REST API**: Full REST API for programmatic access
+- **Interactive Setup**: Easy configuration with `emp setup` - creates secure .env file
+- **API Key Management**: Secure local storage and management via `emp keys` commands
+- **Web Interface**: API server with interactive documentation at `/docs`
 - **Comprehensive Logging**: Detailed logging for monitoring and debugging
 - **Extensive Testing**: 100+ unit tests for reliability
 
@@ -66,17 +68,23 @@ pip install -e .
 
 ## Quick Start
 
+### 1. Setup & Configuration
+
 ```bash
-# Interactive setup (recommended)
+# Interactive setup (recommended) - creates .env file with API keys
 emp setup
 
-# Or manually set your API key
-export OPENAI_API_KEY="your-api-key-here"
-
-# Check your environment
+# Check your environment and API key configuration
 emp env-check
 
-# Test a model
+# View configured API keys (masked for security)
+emp keys show
+```
+
+### 2. Testing AI Models
+
+```bash
+# Test a model with default suites
 emp test gpt-4
 
 # Test specific suites
@@ -101,9 +109,55 @@ emp check gpt-4 --suite empathy --quick
 emp test claude-3-opus --threshold 0.95 --verbose
 ```
 
+### 3. API Server
+
+```bash
+# Launch the API server
+emp serve
+
+# Visit http://localhost:8000/docs for interactive API documentation
+# Visit http://localhost:8000/api/health for health check
+```
+
 ## Configuration
 
-Create `empathetic.yaml` in your project directory:
+### Environment Variables (.env)
+
+The framework uses a `.env` file to store sensitive configuration like API keys securely:
+
+```bash
+# Interactive setup (recommended) - creates .env file
+emp setup
+
+# Or manually copy and edit the template
+cp .env.example .env
+nano .env
+
+# Manage API keys via CLI
+emp keys show           # Show configured keys (masked for security)
+emp keys set openai     # Set/update OpenAI API key
+emp keys set anthropic  # Set/update Anthropic API key
+emp keys remove openai  # Remove a key
+```
+
+**Environment Variables:**
+- `OPENAI_API_KEY` - OpenAI API key (required for OpenAI models)
+- `ANTHROPIC_API_KEY` - Anthropic API key (required for Claude models)
+- `HUGGINGFACE_API_KEY` - HuggingFace API key (optional)
+- `EMPATHETIC_DEFAULT_MODEL` - Default model for testing (default: gpt-3.5-turbo)
+- `EMPATHETIC_CONFIG` - Path to YAML config file (default: ./empathetic.yaml)
+- `SECRET_KEY` - Secret key for API authentication
+- `DEBUG` - Enable debug mode (default: false)
+
+**Security:**
+- The `.env` file is automatically ignored by git
+- API keys are never logged or displayed in full
+- Keys are masked when displayed (e.g., `sk-test1...7890`)
+- All keys are stored locally only
+
+### Configuration File (empathetic.yaml)
+
+Create `empathetic.yaml` in your project directory for test configuration:
 
 ```yaml
 test_suites:
@@ -209,41 +263,113 @@ scoring:
 
 ## CLI Commands
 
+### Setup & Configuration
 ```bash
-# Setup and configuration
-emp setup                    # Interactive setup wizard
-emp env-check               # Check environment configuration
-
-# Testing commands  
-emp test MODEL              # Run all tests on a model
-emp test MODEL --suite SUITE1,SUITE2  # Run specific test suites
-emp test MODEL --quick      # Run subset of tests for faster feedback
-emp test MODEL --threshold 0.95       # Set custom passing threshold
-emp test MODEL --output html          # Generate HTML report
-emp test MODEL --verbose    # Verbose output with detailed information
-
-# Quick checks
-emp check MODEL --suite SUITE  # Quick check against specific suite
-emp check MODEL --suite bias --quick  # Quick bias check
-
-# Model capabilities
-emp capabilities MODEL          # Detect model capabilities and get recommendations
-emp capabilities MODEL --verbose  # Detailed capability analysis
-
-# Reports
-emp report --format html    # Generate HTML report from results
-emp report --input results.json --format markdown  # Convert results
-
-# Validation
-emp validate PATH           # Validate models at path (coming soon)
+emp setup                       # Interactive setup wizard - creates .env file
+emp env-check                   # Check environment configuration and API keys
+emp keys show                   # Display configured API keys (masked)
+emp keys set PROVIDER           # Set API key for provider (openai, anthropic, huggingface)
+emp keys remove PROVIDER        # Remove API key for provider
 ```
 
-## API Usage
+### API Server
+```bash
+emp serve                       # Launch API server on http://localhost:8000
+emp serve --host 0.0.0.0        # Bind to all interfaces
+emp serve --port 8080           # Use custom port
+emp serve --reload              # Enable auto-reload for development
+```
+
+### Testing Commands  
+```bash
+emp test MODEL                  # Run all tests on a model
+emp test MODEL --suite SUITE1,SUITE2  # Run specific test suites
+emp test MODEL --quick          # Run subset of tests for faster feedback
+emp test MODEL --threshold 0.95 # Set custom passing threshold
+emp test MODEL --output html    # Generate HTML report
+emp test MODEL --verbose        # Verbose output with detailed information
+```
+
+### Quick Checks
+```bash
+emp check MODEL --suite SUITE   # Quick check against specific suite
+emp check MODEL --suite bias --quick  # Quick bias check
+```
+
+### Model Capabilities
+```bash
+emp capabilities MODEL          # Detect model capabilities and get recommendations
+emp capabilities MODEL --verbose  # Detailed capability analysis
+```
+
+### Reports
+```bash
+emp report --format html        # Generate HTML report from results
+emp report --input results.json --format markdown  # Convert results
+```
+
+## REST API
+
+The Empathetic framework includes a REST API for web integration.
+
+### Starting the API Server
+
+```bash
+# Start the API server
+emp serve
+
+# Custom configuration
+emp serve --host 0.0.0.0 --port 8080 --reload
+```
+
+### API Endpoints
+
+#### Testing Endpoints
+- `POST /api/testing/run` - Run test suites on a model
+- `GET /api/testing/models` - List available AI models
+- `GET /api/testing/suites` - List available test suites
+- `GET /api/testing/results/{model}` - Get recent test results for a model
+- `POST /api/testing/capabilities/{model}` - Detect model capabilities
+
+#### Report Endpoints
+- `GET /api/reports/generate/{model}` - Generate report for a model
+- `GET /api/reports/download/{model}` - Download report file
+- `GET /api/reports/dashboard/{model}` - Get dashboard data
+
+#### System Endpoints
+- `GET /api/health/` - Health check
+- `GET /api/health/ready` - Readiness check
+- `GET /docs` - Interactive API documentation
+- `GET /` - API information
+
+### Example API Usage
+
+```bash
+# Test a model via API
+curl -X POST "http://localhost:8000/api/testing/run" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4",
+    "suites": ["empathy", "bias"],
+    "quick_mode": false,
+    "enable_validation": false
+  }'
+
+# Get health status
+curl http://localhost:8000/api/health/
+
+# List available models
+curl http://localhost:8000/api/testing/models
+
+```
+
+## API Usage (Python)
+
+### Direct Framework Usage
 
 ```python
 import asyncio
 from empathetic.core.tester import Tester
-
 
 async def test_model():
     # Create tester
@@ -262,20 +388,37 @@ async def test_model():
     for suite_name, result in results.suite_results.items():
         print(f"{suite_name}: {result.score:.3f} ({result.tests_passed}/{result.tests_total})")
 
-
 # Run the test
 asyncio.run(test_model())
 ```
 
-## Community Validation
+### REST API Usage
 
-Empathetic includes a groundbreaking community validation system where real people from affected communities evaluate AI responses. This ensures our tests reflect authentic lived experiences.
+```python
+import requests
 
-- **500+ Community Validators** from disability, LGBTQ+, racial justice, and other communities
-- **Partner Organizations** verify validator credentials and provide oversight
-- **Real-world Impact** - validation results help improve AI systems and inform policy
+# Start API server first: emp serve
 
-**Learn More**: [Community Validation Documentation](docs/community-validation.md)
+# Test a model via REST API
+response = requests.post("http://localhost:8000/api/testing/run", json={
+    "model": "gpt-4",
+    "suites": ["empathy", "bias"],
+    "quick_mode": False,
+    "enable_validation": False
+})
+
+if response.status_code == 200:
+    result = response.json()
+    print(f"Overall score: {result['overall_score']:.3f}")
+    print(f"Passed: {result['passed']}")
+else:
+    print(f"Error: {response.status_code}")
+
+# Get available models
+models = requests.get("http://localhost:8000/api/testing/models").json()
+print("Available models:", [m['id'] for m in models['models']])
+
+```
 
 ## Model Capability Detection
 
@@ -298,11 +441,6 @@ emp capabilities gpt-4 --verbose
 
 **Learn More**: [Model Capabilities Documentation](docs/model-capabilities.md)
 
-### Get Involved
-- **Become a Validator**: Join our community validation network
-- **Partner Organization**: Help verify community validators
-- **Submit Test Cases**: Share scenarios from your lived experience
-
 ## Contributing
 
 1. Fork the repository
@@ -310,13 +448,16 @@ emp capabilities gpt-4 --verbose
 3. Add tests for new functionality
 4. Submit a pull request
 
-**Community Contributions Welcome**: We especially encourage contributions from affected communities to help expand our test coverage and validation network.
-
 ## Development
+
+### Setup Development Environment
 
 ```bash
 # Install development dependencies
 poetry install
+
+# Create .env file for development
+emp setup
 
 # Run tests
 pytest
@@ -328,3 +469,124 @@ ruff check .
 # Type checking
 mypy .
 ```
+
+### API Development
+
+```bash
+# Start API server with auto-reload
+emp serve --reload
+
+# Run API in development mode
+emp serve --host 0.0.0.0 --port 8000 --reload
+
+# Test API endpoints
+curl http://localhost:8000/api/health/
+curl http://localhost:8000/docs
+
+# Test the API
+curl http://localhost:8000/api/testing/models
+```
+
+### Environment Management
+
+```bash
+# Check current configuration
+emp env-check
+
+# View all configured API keys
+emp keys show
+
+# Test with different providers
+emp keys set openai
+emp test gpt-4
+
+emp keys set anthropic  
+emp test claude-3-sonnet
+```
+
+### Testing New Features
+
+```bash
+# Run specific test suites
+pytest tests/test_api.py
+pytest tests/test_cli.py
+
+# Test CLI commands
+emp test gpt-3.5-turbo --suite empathy --quick
+emp capabilities gpt-4 --verbose
+
+# Test API endpoints
+python -c "
+import requests
+response = requests.get('http://localhost:8000/api/testing/models')
+print(response.json())
+"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### API Key Configuration
+```bash
+# Check if API keys are configured
+emp env-check
+
+# API key not found
+emp keys show
+emp setup  # Re-run setup to configure keys
+
+# Key format validation failed
+emp keys set openai  # Re-enter key with correct format
+```
+
+#### Server Issues
+```bash
+# Port already in use
+emp serve --port 8001
+
+# Server not responding
+curl http://localhost:8000/api/health/  # Check if server is running
+emp serve --reload  # Restart with auto-reload
+
+# Import errors
+pip install -e .  # Reinstall in development mode
+poetry install     # Install all dependencies
+```
+
+#### Test Failures
+```bash
+# No API key configured
+emp setup  # Configure API keys first
+
+# Test data files missing (warnings are normal for development)
+# These warnings can be ignored during initial setup
+
+# Rate limiting
+# Wait a few minutes between test runs
+# Use --quick flag for faster testing
+emp test gpt-3.5-turbo --suite empathy --quick
+```
+
+#### Environment Issues
+```bash
+# .env file not found
+cp .env.example .env
+emp setup
+
+# Permission errors
+chmod 600 .env  # Secure .env file permissions
+
+# Configuration not loading
+rm .env && emp setup  # Recreate .env file
+```
+
+### Getting Help
+
+- Check the logs: `emp serve` shows detailed error messages
+- Validate API keys: `emp keys show` to verify configuration
+- Test connectivity: `curl http://localhost:8000/api/health/`
+- Review configuration: `emp env-check`
+- Interactive API docs: Visit `http://localhost:8000/docs`
+
+For additional support, please check the [GitHub Issues](https://github.com/studio1804/empathetic/issues) or create a new issue.

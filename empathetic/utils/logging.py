@@ -13,9 +13,15 @@ class EmphatheticLogger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, log_level.upper()))
         
-        # Prevent duplicate handlers
-        if not self.logger.handlers:
+        # Prevent duplicate handlers - check for any existing handlers
+        if not self.logger.handlers and not any(
+            handler for handler in logging.getLogger().handlers 
+            if hasattr(handler, 'stream') and hasattr(handler.stream, 'name')
+        ):
             self._setup_handlers()
+        
+        # Prevent propagation to avoid root logger duplication
+        self.logger.propagate = False
             
     def _setup_handlers(self):
         """Setup console and file handlers"""
@@ -29,12 +35,14 @@ class EmphatheticLogger:
         console_handler.setFormatter(console_formatter)
         
         # File handler for detailed logging
-        log_dir = Path("logs")
-        log_dir.mkdir(exist_ok=True)
+        log_dir = Path("outputs/logs")
+        log_dir.mkdir(parents=True, exist_ok=True)
         
-        file_handler = logging.FileHandler(
-            log_dir / f"empathetic_{datetime.now().strftime('%Y%m%d')}.log"
-        )
+        # Organized log file naming
+        timestamp = datetime.now().strftime('%Y%m%d')
+        log_file = log_dir / f"empathetic_{timestamp}.log"
+        
+        file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(message)s'
@@ -167,14 +175,19 @@ class ColoredFormatter(logging.Formatter):
         return f"{self.COLORS.get(record.levelname, '')}{log_message}{self.COLORS['RESET']}"
 
 # Global logger instances
-logger = EmphatheticLogger()
-test_logger = EmphatheticLogger("empathetic.tests")
-provider_logger = EmphatheticLogger("empathetic.providers")
-metrics_logger = EmphatheticLogger("empathetic.metrics")
+_logger_instances = {}
 
 def get_logger(name: str = "empathetic") -> EmphatheticLogger:
     """Get logger instance for specific module"""
-    return EmphatheticLogger(name)
+    if name not in _logger_instances:
+        _logger_instances[name] = EmphatheticLogger(name)
+    return _logger_instances[name]
+
+# Initialize commonly used loggers
+logger = get_logger()
+test_logger = get_logger("empathetic.tests")
+provider_logger = get_logger("empathetic.providers")
+metrics_logger = get_logger("empathetic.metrics")
 
 def set_log_level(level: str):
     """Set global log level"""

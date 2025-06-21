@@ -1,17 +1,17 @@
-import os
 import time
 from typing import List, Dict, Any, Optional
 import httpx
 import json
 from .base import ModelProvider, ModelResponse, APIError, ConfigurationError
 from ..utils.logging import get_logger
+from ..config import config
 
 class OpenAIProvider(ModelProvider):
     """OpenAI model provider"""
     
     def __init__(self, model_name: str, api_key: Optional[str] = None, **kwargs):
         super().__init__(model_name, **kwargs)
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or config.get_api_key("openai")
         self.base_url = kwargs.get("base_url", "https://api.openai.com/v1")
         self.logger = get_logger("empathetic.providers.openai")
         

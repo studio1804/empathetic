@@ -58,7 +58,41 @@ htmlcov/
 secrets.yaml
 api_keys.txt
 
-# Results
+# Outputs and Generated Files
+outputs/logs/
+outputs/reports/
+outputs/results/
+outputs/artifacts/
+outputs/temp/
+*.log
+
+# Legacy directories (to be migrated)
+logs/
 results/
 reports/
-*.log
+
+# Generated reports and analysis
+*.html
+*.json
+*.csv
+empathetic_*.log
+test_execution_*.log
+api_calls_*.log
+report_*.html
+report_*.json
+report_*.md
+results_*.json
+empathy_scores_*.csv
+bias_analysis_*.json
+
+# Cache and temporary files
+.cache/
+.temp/
+*.tmp
+*.cache
+
+# Model artifacts and data
+model_cache/
+embeddings_cache/
+*.pkl
+*.joblib
