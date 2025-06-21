@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 
 from ..metrics.dimensions import EmpathyDimensionScorer
-from .interface import ModelInterface
+# from .interface import ModelInterface  # Remove this import for now
 
 logger = logging.getLogger(__name__)
 
@@ -94,13 +94,13 @@ class CapabilityDetector:
 
     async def detect_capabilities(
         self,
-        model: ModelInterface,
+        provider,  # Provider object instead of ModelInterface
         quick_mode: bool = False
     ) -> ModelCapabilities:
         """Detect comprehensive model capabilities
 
         Args:
-            model: Model interface to test
+            provider: Provider object to test
             quick_mode: If True, run faster but less comprehensive detection
 
         Returns:
@@ -110,10 +110,10 @@ class CapabilityDetector:
         logger.info("Starting model capability detection...")
 
         # Run capability detection tests
-        basic_caps = await self._detect_basic_capabilities(model)
-        performance_caps = await self._detect_performance_characteristics(model, quick_mode)
-        empathy_caps = await self._detect_empathy_capabilities(model, quick_mode)
-        reliability_caps = await self._detect_reliability_metrics(model, quick_mode)
+        basic_caps = await self._detect_basic_capabilities(provider)
+        performance_caps = await self._detect_performance_characteristics(provider, quick_mode)
+        empathy_caps = await self._detect_empathy_capabilities(provider, quick_mode)
+        reliability_caps = await self._detect_reliability_metrics(provider, quick_mode)
 
         # Analyze strengths and weaknesses
         strong_areas, weak_areas = self._analyze_strengths_weaknesses(empathy_caps)
@@ -160,20 +160,20 @@ class CapabilityDetector:
 
         return capabilities
 
-    async def _detect_basic_capabilities(self, model: ModelInterface) -> dict[str, Any]:
+    async def _detect_basic_capabilities(self, provider) -> dict[str, Any]:
         """Detect basic model capabilities"""
         logger.debug("Testing basic capabilities...")
 
         capabilities = {}
 
         # Test context length
-        capabilities['context_length'] = await self._test_context_length(model)
+        capabilities['context_length'] = await self._test_context_length(provider)
 
         # Test system prompt support
-        capabilities['supports_system_prompt'] = await self._test_system_prompt_support(model)
+        capabilities['supports_system_prompt'] = await self._test_system_prompt_support(provider)
 
         # Test JSON output
-        capabilities['supports_json_output'] = await self._test_json_output(model)
+        capabilities['supports_json_output'] = await self._test_json_output(provider)
 
         # Test function calling (placeholder for now)
         capabilities['supports_function_calling'] = False
@@ -183,16 +183,16 @@ class CapabilityDetector:
 
         return capabilities
 
-    async def _test_context_length(self, model: ModelInterface) -> int:
+    async def _test_context_length(self, provider) -> int:
         """Test maximum context length the model can handle"""
         context_lengths = [1000, 2000, 4000, 8000, 16000, 32000]
 
         for length in context_lengths:
             try:
                 test_text = "Please summarize: " + "A" * length
-                response = await model.generate(test_text, max_tokens=50)
+                response = await provider.generate(test_text, max_tokens=50)
 
-                if not response.text or "error" in response.text.lower():
+                if not response.content or "error" in response.content.lower():
                     return max(1000, length // 2)  # Return previous working length
 
             except Exception as e:
@@ -201,32 +201,32 @@ class CapabilityDetector:
 
         return context_lengths[-1]  # If all passed, return max tested
 
-    async def _test_system_prompt_support(self, model: ModelInterface) -> bool:
+    async def _test_system_prompt_support(self, provider) -> bool:
         """Test if model supports system prompts"""
         try:
             # Try with system prompt
-            response = await model.generate(
+            response = await provider.generate(
                 "What is 2+2?",
                 system_prompt="You are a helpful math tutor."
             )
-            return bool(response.text)
+            return bool(response.content)
         except Exception:
             return False
 
-    async def _test_json_output(self, model: ModelInterface) -> bool:
+    async def _test_json_output(self, provider) -> bool:
         """Test if model can produce structured JSON output"""
         try:
             prompt = "Return a JSON object with fields 'name' and 'age' for a person named John who is 25."
-            response = await model.generate(prompt, max_tokens=100)
+            response = await provider.generate(prompt, max_tokens=100)
 
             # Simple check if response looks like JSON
-            return "{" in response.text and "}" in response.text
+            return "{" in response.content and "}" in response.content
         except Exception:
             return False
 
     async def _detect_performance_characteristics(
         self,
-        model: ModelInterface,
+        provider,
         quick_mode: bool
     ) -> dict[str, float]:
         """Detect performance characteristics like speed and consistency"""
@@ -248,14 +248,14 @@ class CapabilityDetector:
         for prompt in test_prompts:
             try:
                 start_time = time.time()
-                response = await model.generate(prompt, max_tokens=200)
+                response = await provider.generate(prompt, max_tokens=200)
                 latency = time.time() - start_time
 
                 latencies.append(latency)
-                responses.append(response.text)
+                responses.append(response.content)
 
                 # Estimate tokens per second (rough approximation)
-                len(response.text.split()) * 1.3  # ~1.3 tokens per word
+                len(response.content.split()) * 1.3  # ~1.3 tokens per word
 
             except Exception as e:
                 logger.debug(f"Performance test failed: {e}")
@@ -291,23 +291,23 @@ class CapabilityDetector:
 
     async def _detect_empathy_capabilities(
         self,
-        model: ModelInterface,
+        provider,
         quick_mode: bool
     ) -> dict[str, float]:
         """Detect empathy-specific capabilities"""
         logger.debug("Testing empathy capabilities...")
 
         # Test empathy baseline
-        empathy_baseline = await self._test_empathy_baseline(model, quick_mode)
+        empathy_baseline = await self._test_empathy_baseline(provider, quick_mode)
 
         # Test bias susceptibility
-        bias_susceptibility = await self._test_bias_susceptibility(model, quick_mode)
+        bias_susceptibility = await self._test_bias_susceptibility(provider, quick_mode)
 
         # Test cultural awareness
-        cultural_awareness = await self._test_cultural_awareness(model, quick_mode)
+        cultural_awareness = await self._test_cultural_awareness(provider, quick_mode)
 
         # Test systemic thinking
-        systemic_thinking = await self._test_systemic_thinking(model, quick_mode)
+        systemic_thinking = await self._test_systemic_thinking(provider, quick_mode)
 
         return {
             'empathy_baseline': empathy_baseline,
@@ -316,7 +316,7 @@ class CapabilityDetector:
             'systemic_thinking': systemic_thinking
         }
 
-    async def _test_empathy_baseline(self, model: ModelInterface, quick_mode: bool) -> float:
+    async def _test_empathy_baseline(self, provider, quick_mode: bool) -> float:
         """Test baseline empathy across standard scenarios"""
         scenarios = self.probe_scenarios['empathy_baseline']
         if quick_mode:
@@ -326,11 +326,11 @@ class CapabilityDetector:
 
         for scenario in scenarios:
             try:
-                response = await model.generate(scenario, max_tokens=300)
+                response = await provider.generate(scenario, max_tokens=300)
 
                 # Score empathy using dimension scorer
                 dimension_result = self.empathy_scorer.score_response(
-                    response.text,
+                    response.content,
                     scenario
                 )
 
@@ -342,7 +342,7 @@ class CapabilityDetector:
 
         return np.mean(empathy_scores) if empathy_scores else 0.0
 
-    async def _test_bias_susceptibility(self, model: ModelInterface, quick_mode: bool) -> float:
+    async def _test_bias_susceptibility(self, provider, quick_mode: bool) -> float:
         """Test how much empathy varies by identity (higher = more biased)"""
         from ..tests.patterns.adversarial import AdversarialTestPattern
 
@@ -374,7 +374,7 @@ class CapabilityDetector:
             logger.debug(f"Bias susceptibility test failed: {e}")
             return 0.5  # Default moderate bias susceptibility
 
-    async def _test_cultural_awareness(self, model: ModelInterface, quick_mode: bool) -> float:
+    async def _test_cultural_awareness(self, provider, quick_mode: bool) -> float:
         """Test understanding of cultural contexts"""
         scenarios = self.probe_scenarios['cultural_awareness']
         if quick_mode:
@@ -390,11 +390,11 @@ class CapabilityDetector:
 
         for scenario in scenarios:
             try:
-                response = await model.generate(scenario, max_tokens=300)
+                response = await provider.generate(scenario, max_tokens=300)
 
                 # Score based on cultural keyword presence and empathy
-                keyword_score = self._calculate_keyword_presence(response.text, cultural_keywords)
-                empathy_result = self.empathy_scorer.score_response(response.text, scenario)
+                keyword_score = self._calculate_keyword_presence(response.content, cultural_keywords)
+                empathy_result = self.empathy_scorer.score_response(response.content, scenario)
 
                 # Combined score
                 cultural_score = (keyword_score + empathy_result.weighted_score) / 2
@@ -406,7 +406,7 @@ class CapabilityDetector:
 
         return np.mean(cultural_scores) if cultural_scores else 0.0
 
-    async def _test_systemic_thinking(self, model: ModelInterface, quick_mode: bool) -> float:
+    async def _test_systemic_thinking(self, provider, quick_mode: bool) -> float:
         """Test recognition of systemic issues"""
         scenarios = self.probe_scenarios['systemic_thinking']
         if quick_mode:
@@ -422,10 +422,10 @@ class CapabilityDetector:
 
         for scenario in scenarios:
             try:
-                response = await model.generate(scenario, max_tokens=300)
+                response = await provider.generate(scenario, max_tokens=300)
 
                 # Score based on systemic keyword presence
-                keyword_score = self._calculate_keyword_presence(response.text, systemic_keywords)
+                keyword_score = self._calculate_keyword_presence(response.content, systemic_keywords)
                 systemic_scores.append(keyword_score)
 
             except Exception as e:
@@ -442,7 +442,7 @@ class CapabilityDetector:
 
     async def _detect_reliability_metrics(
         self,
-        model: ModelInterface,
+        provider,
         quick_mode: bool
     ) -> dict[str, float]:
         """Detect reliability metrics like error rate and hallucination tendency"""
@@ -466,10 +466,10 @@ class CapabilityDetector:
 
         for prompt in test_prompts[:test_count]:
             try:
-                response = await model.generate(prompt, max_tokens=200)
+                response = await provider.generate(prompt, max_tokens=200)
 
                 # Check for hallucination indicators
-                if self._check_hallucination_indicators(response.text, prompt):
+                if self._check_hallucination_indicators(response.content, prompt):
                     hallucination_indicators += 1
 
             except Exception as e:
