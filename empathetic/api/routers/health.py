@@ -1,6 +1,8 @@
 """Health check endpoints."""
-from fastapi import APIRouter
 from datetime import datetime
+
+from fastapi import APIRouter
+
 from ..config import get_settings
 
 router = APIRouter()
@@ -25,9 +27,9 @@ async def readiness_check():
         "openai_configured": bool(settings.OPENAI_API_KEY),
         "anthropic_configured": bool(settings.ANTHROPIC_API_KEY),
     }
-    
+
     all_ready = all(checks.values())
-    
+
     return {
         "ready": all_ready,
         "checks": checks,

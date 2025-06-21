@@ -1,20 +1,21 @@
 """Testing models for AI evaluation."""
 from datetime import datetime
-from typing import List, Dict, Optional, Any
+from typing import Any, Optional
+
 from pydantic import BaseModel, Field
 
 
 class TestRequest(BaseModel):
     """Request to run tests on an AI model."""
     model: str = Field(description="Model identifier (e.g., gpt-4)")
-    suites: List[str] = Field(
+    suites: list[str] = Field(
         default=["empathy", "bias"],
         description="Test suites to run"
     )
-    config: Optional[Dict[str, Any]] = Field(default={})
+    config: Optional[dict[str, Any]] = Field(default={})
     quick_mode: bool = Field(default=False, description="Run subset of tests")
     enable_validation: bool = Field(
-        default=False, 
+        default=False,
         description="Request community validation for responses"
     )
 
@@ -27,10 +28,10 @@ class TestCase(BaseModel):
     passed: bool
     score: float = Field(ge=0.0, le=1.0)
     input: str
-    expected_markers: List[str]
+    expected_markers: list[str]
     actual_response: str
-    detected_markers: List[str]
-    issues: List[str] = []
+    detected_markers: list[str]
+    issues: list[str] = []
     execution_time: float
 
 
@@ -42,8 +43,8 @@ class TestSuite(BaseModel):
     tests_passed: int
     tests_failed: int
     execution_time: float
-    test_cases: List[TestCase]
-    
+    test_cases: list[TestCase]
+
     @property
     def pass_rate(self) -> float:
         """Calculate pass rate."""
@@ -56,16 +57,16 @@ class TestResult(BaseModel):
     overall_score: float = Field(ge=0.0, le=1.0)
     passed: bool
     threshold: float = Field(default=0.9)
-    suite_results: Dict[str, TestSuite]
-    empathy_dimensions: Optional[Dict[str, float]] = None
-    bias_analysis: Optional[Dict[str, Any]] = None
+    suite_results: dict[str, TestSuite]
+    empathy_dimensions: Optional[dict[str, float]] = None
+    bias_analysis: Optional[dict[str, Any]] = None
     community_validation_pending: bool = False
     started_at: datetime
     completed_at: datetime
     total_execution_time: float
-    
+
     @property
-    def summary(self) -> Dict[str, Any]:
+    def summary(self) -> dict[str, Any]:
         """Get result summary."""
         return {
             "model": self.model,

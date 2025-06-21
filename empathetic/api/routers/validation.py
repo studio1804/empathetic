@@ -1,16 +1,15 @@
 """Community validation endpoints."""
-from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Depends, Query
-from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..models.validation import (
-    ValidationRequest, 
+    ValidationRequest,
     ValidationResponse,
     ValidatorProfile,
-    CommunityConsensus
 )
-from ..services.validation import ValidationService
 from ..services.auth import get_current_validator
+from ..services.validation import ValidationService
 
 router = APIRouter()
 validation_service = ValidationService()
@@ -28,8 +27,8 @@ async def create_validation_request(request: ValidationRequest):
 
 @router.get("/pending")
 async def get_pending_validations(
-    communities: Optional[List[str]] = Query(None),
-    expertise: Optional[List[str]] = Query(None),
+    communities: Optional[list[str]] = Query(None),
+    expertise: Optional[list[str]] = Query(None),
     limit: int = 10,
     current_validator: ValidatorProfile = Depends(get_current_validator)
 ):
@@ -53,9 +52,9 @@ async def submit_validation(
     try:
         response.validator_id = current_validator.username
         response.validation_request_id = validation_id
-        
+
         await validation_service.submit_response(response)
-        
+
         return {
             "status": "submitted",
             "validation_id": validation_id,

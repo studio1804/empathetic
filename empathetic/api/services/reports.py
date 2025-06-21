@@ -1,21 +1,19 @@
 """Report generation service."""
-from typing import Dict, Optional
 import tempfile
-import os
-from datetime import datetime
 
 from empathetic.reports.generator import ReportGenerator
-from .testing import TestingService
+
 from ..models.testing import TestResult
+from .testing import TestingService
 
 
 class ReportService:
     """Service for generating reports."""
-    
+
     def __init__(self):
         self.testing_service = TestingService()
         self.report_generator = ReportGenerator()
-    
+
     async def generate_report(
         self,
         model: str,
@@ -27,12 +25,12 @@ class ReportService:
         results = await self.testing_service.get_recent_results(model, limit=1)
         if not results:
             raise ValueError(f"No test results found for model: {model}")
-        
+
         latest_result = results[0]
-        
+
         # Convert to format expected by ReportGenerator
         test_results = self._convert_to_report_format(latest_result)
-        
+
         if format == "html":
             return self.report_generator.generate_html(test_results)
         elif format == "json":
@@ -43,36 +41,36 @@ class ReportService:
             temp_file.write(content)
             temp_file.close()
             return temp_file.name
-    
+
     async def generate_report_file(self, model: str, format: str = "html") -> str:
         """Generate a report file."""
         content = await self.generate_report(model, format)
-        
+
         if format in ["json", "markdown"]:
             return content  # Already a file path or dict
-        
+
         # For HTML, write to temp file
         temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False)
         temp_file.write(content)
         temp_file.close()
         return temp_file.name
-    
-    async def get_dashboard_data(self, model: str) -> Dict:
+
+    async def get_dashboard_data(self, model: str) -> dict:
         """Get dashboard data for a model."""
         results = await self.testing_service.get_recent_results(model, limit=10)
-        
+
         if not results:
             return {
                 "model": model,
                 "has_results": False
             }
-        
+
         latest = results[0]
-        
+
         # Calculate trends
         score_history = [r.overall_score for r in results]
         score_trend = "improving" if len(score_history) > 1 and score_history[0] > score_history[-1] else "stable"
-        
+
         return {
             "model": model,
             "has_results": True,
@@ -81,7 +79,7 @@ class ReportService:
             "score_trend": score_trend,
             "score_history": score_history,
             "suite_scores": {
-                name: suite.score 
+                name: suite.score
                 for name, suite in latest.suite_results.items()
             },
             "total_tests_run": sum(s.tests_total for s in latest.suite_results.values()),
@@ -95,8 +93,8 @@ class ReportService:
                 for r in results
             ]
         }
-    
-    def _convert_to_report_format(self, test_result: TestResult) -> Dict:
+
+    def _convert_to_report_format(self, test_result: TestResult) -> dict:
         """Convert API TestResult to report generator format."""
         return {
             "model": test_result.model,

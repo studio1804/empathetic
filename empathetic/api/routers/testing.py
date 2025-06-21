@@ -1,10 +1,8 @@
 """Testing endpoints for running AI model evaluations."""
-from typing import List
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from datetime import datetime
-import asyncio
 
-from ..models.testing import TestRequest, TestResult, TestSuite, TestCase
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+
+from ..models.testing import TestRequest, TestResult
 from ..services.testing import TestingService
 from ..services.validation import ValidationService
 
@@ -26,14 +24,14 @@ async def run_tests(
             config=request.config,
             quick_mode=request.quick_mode
         )
-        
+
         if request.enable_validation and result.passed:
             background_tasks.add_task(
                 validation_service.request_validation_for_tests,
                 result
             )
             result.community_validation_pending = True
-        
+
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -65,7 +63,7 @@ async def list_test_suites():
             },
             {
                 "id": "bias",
-                "name": "Bias Detection", 
+                "name": "Bias Detection",
                 "description": "Tests for gender, racial, age, and cultural biases",
                 "test_count": 40
             },

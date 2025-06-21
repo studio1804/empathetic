@@ -1,14 +1,15 @@
 """Validation models for community validation system."""
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, Optional
+
 from pydantic import BaseModel, Field
 
 
 class ValidatorProfile(BaseModel):
     """Community validator profile."""
     username: str
-    communities: List[str] = Field(description="Communities the validator represents")
-    expertise_areas: List[str] = Field(description="Areas of lived experience")
+    communities: list[str] = Field(description="Communities the validator represents")
+    expertise_areas: list[str] = Field(description="Areas of lived experience")
     organization: Optional[str] = Field(description="Verifying organization")
     trust_score: float = Field(default=1.0, ge=0.0, le=2.0)
     validations_completed: int = Field(default=0, ge=0)
@@ -21,9 +22,9 @@ class ValidationRequest(BaseModel):
     test_scenario: str = Field(description="The scenario being tested")
     ai_response: str = Field(description="The AI model's response")
     model_name: str = Field(description="Name of the AI model")
-    target_communities: List[str] = Field(description="Communities to request validation from")
+    target_communities: list[str] = Field(description="Communities to request validation from")
     test_type: str = Field(description="Type of test (empathy, bias, etc.)")
-    metadata: Optional[Dict[str, Any]] = Field(default={})
+    metadata: Optional[dict[str, Any]] = Field(default={})
 
 
 class ValidationQuestion(BaseModel):
@@ -32,14 +33,14 @@ class ValidationQuestion(BaseModel):
     question: str
     question_type: str = Field(description="rating, boolean, text")
     required: bool = True
-    options: Optional[Dict[str, Any]] = None
+    options: Optional[dict[str, Any]] = None
 
 
 class ValidationResponse(BaseModel):
     """Response from a community validator."""
     validator_id: str
     validation_request_id: str
-    responses: Dict[str, Any] = Field(description="Answers to validation questions")
+    responses: dict[str, Any] = Field(description="Answers to validation questions")
     empathy_score: float = Field(ge=1.0, le=5.0)
     respect_score: float = Field(ge=1.0, le=5.0)
     has_harmful_content: bool = False
@@ -55,6 +56,6 @@ class CommunityConsensus(BaseModel):
     agreement_level: float = Field(ge=0.0, le=1.0)
     validator_count: int
     community_approved: bool
-    feedback_themes: List[str]
-    improvement_suggestions: List[str]
-    harmful_patterns: Optional[List[str]] = None
+    feedback_themes: list[str]
+    improvement_suggestions: list[str]
+    harmful_patterns: Optional[list[str]] = None

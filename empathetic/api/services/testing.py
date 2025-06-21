@@ -1,38 +1,38 @@
 """Testing service for running AI evaluations."""
-from typing import List, Dict, Optional
 from datetime import datetime
-import asyncio
+from typing import Optional
 
 from empathetic.core.tester import Tester
-from ..models.testing import TestResult, TestSuite, TestCase
+
+from ..models.testing import TestCase, TestResult, TestSuite
 
 
 class TestingService:
     """Service for managing AI model testing."""
-    
+
     def __init__(self):
         self.tester = Tester()
         self._results_cache = {}
-    
+
     async def run_tests(
         self,
         model: str,
-        suites: List[str],
-        config: Optional[Dict] = None,
+        suites: list[str],
+        config: Optional[dict] = None,
         quick_mode: bool = False
     ) -> TestResult:
         """Run test suites on a model."""
         started_at = datetime.utcnow()
-        
+
         # Run tests using the existing Empathetic framework
         results = await self.tester.run_tests(
             model=model,
             suites=suites,
             config=config or {}
         )
-        
+
         completed_at = datetime.utcnow()
-        
+
         # Convert to API model
         suite_results = {}
         for suite_name, suite_result in results.suite_results.items():
@@ -51,7 +51,7 @@ class TestingService:
                     issues=test.issues,
                     execution_time=0.1  # Placeholder
                 ))
-            
+
             suite_results[suite_name] = TestSuite(
                 name=suite_name,
                 score=suite_result.score,
@@ -61,7 +61,7 @@ class TestingService:
                 execution_time=1.0,  # Placeholder
                 test_cases=test_cases
             )
-        
+
         test_result = TestResult(
             model=model,
             overall_score=results.overall_score,
@@ -72,19 +72,19 @@ class TestingService:
             completed_at=completed_at,
             total_execution_time=(completed_at - started_at).total_seconds()
         )
-        
+
         # Cache result
         if model not in self._results_cache:
             self._results_cache[model] = []
         self._results_cache[model].insert(0, test_result)
-        
+
         return test_result
-    
-    async def get_recent_results(self, model: str, limit: int = 10) -> List[TestResult]:
+
+    async def get_recent_results(self, model: str, limit: int = 10) -> list[TestResult]:
         """Get recent test results for a model."""
         return self._results_cache.get(model, [])[:limit]
-    
-    async def detect_capabilities(self, model: str) -> Dict:
+
+    async def detect_capabilities(self, model: str) -> dict:
         """Detect model capabilities."""
         provider = self.tester._get_provider(model)
         if hasattr(provider, 'detect_capabilities'):

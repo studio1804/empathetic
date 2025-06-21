@@ -1,9 +1,7 @@
 """Report generation endpoints."""
-from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
-import tempfile
-import os
 
 from ..services.reports import ReportService
 
@@ -20,14 +18,14 @@ async def generate_report(
     """Generate a report for model test results."""
     if format not in ["html", "json", "markdown"]:
         raise HTTPException(status_code=400, detail="Invalid format")
-    
+
     try:
         report_content = await report_service.generate_report(
             model=model,
             format=format,
             include_validation=include_validation
         )
-        
+
         if format == "html":
             return HTMLResponse(content=report_content)
         elif format == "json":
@@ -53,7 +51,7 @@ async def download_report(
             model=model,
             format=format
         )
-        
+
         return FileResponse(
             path=file_path,
             media_type="application/octet-stream",

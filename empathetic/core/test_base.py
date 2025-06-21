@@ -1,7 +1,8 @@
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Optional
+
 
 class Severity(Enum):
     LOW = "low"
@@ -16,9 +17,9 @@ class TestCase:
     category: str
     input: str
     expected_behavior: str
-    harmful_patterns: List[str]
+    harmful_patterns: list[str]
     severity: Severity
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
 
 @dataclass
 class TestResult:
@@ -28,31 +29,31 @@ class TestResult:
     tests_passed: int
     tests_total: int
     score: float
-    details: Dict[str, Any]
-    recommendations: List[str]
+    details: dict[str, Any]
+    recommendations: list[str]
 
 class TestSuite(ABC):
     """Base class for test suites"""
-    
+
     def __init__(self, name: str):
         self.name = name
-        self.test_cases: List[TestCase] = []
-        
+        self.test_cases: list[TestCase] = []
+
     @abstractmethod
-    async def run(self, provider, config: Optional[Dict] = None) -> TestResult:
+    async def run(self, provider, config: Optional[dict] = None) -> TestResult:
         """Run all tests in the suite"""
         pass
-        
+
     @abstractmethod
     def evaluate_response(self, response: str, test_case: TestCase) -> bool:
         """Evaluate if a response passes the test case"""
         pass
-        
-    def compile_results(self, results: List[Dict[str, Any]]) -> TestResult:
+
+    def compile_results(self, results: list[dict[str, Any]]) -> TestResult:
         """Compile individual test results into suite result"""
         total = len(results)
         passed = sum(1 for r in results if r["passed"])
-        
+
         # Weight by severity
         severity_weights = {
             Severity.LOW: 0.5,
@@ -60,10 +61,10 @@ class TestSuite(ABC):
             Severity.HIGH: 2.0,
             Severity.CRITICAL: 3.0
         }
-        
+
         weighted_score = 0
         total_weight = 0
-        
+
         for result in results:
             # Find test case, or use severity from result if not found (for dynamic tests)
             test_case = next((tc for tc in self.test_cases if tc.id == result["test_id"]), None)
@@ -75,13 +76,13 @@ class TestSuite(ABC):
             total_weight += weight
             if result["passed"]:
                 weighted_score += weight
-                
+
         score = weighted_score / total_weight if total_weight > 0 else 0
-        
+
         # Generate recommendations
         failed_tests = [r for r in results if not r["passed"]]
         recommendations = self._generate_recommendations(failed_tests)
-        
+
         return TestResult(
             model="", # Will be set by caller
             suite=self.name,
@@ -91,14 +92,14 @@ class TestSuite(ABC):
             details={"individual_results": results},
             recommendations=recommendations
         )
-        
-    def _generate_recommendations(self, failed_tests: List[Dict[str, Any]]) -> List[str]:
+
+    def _generate_recommendations(self, failed_tests: list[dict[str, Any]]) -> list[str]:
         """Generate recommendations based on failed tests"""
         recommendations = []
-        
+
         if not failed_tests:
             return recommendations
-            
+
         # Group by category
         categories = {}
         for test in failed_tests:
@@ -119,7 +120,7 @@ class TestSuite(ABC):
                     'category': category,
                     'severity': test.get("severity", "medium")
                 })())
-            
+
         # Generate category-specific recommendations
         for category, tests in categories.items():
             count = len(tests)
@@ -127,5 +128,5 @@ class TestSuite(ABC):
                 recommendations.append(f"Address {count} issues in {category}")
             else:
                 recommendations.append(f"Address issue in {category}: {tests[0].expected_behavior}")
-                
+
         return recommendations

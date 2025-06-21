@@ -1,11 +1,11 @@
 """FastAPI backend for Empathetic framework."""
-import os
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import testing, reports, health
-from .config import get_settings
 
+from .config import get_settings
+from .routers import health, reports, testing
 
 settings = get_settings()
 
